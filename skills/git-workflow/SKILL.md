@@ -13,7 +13,8 @@ GitLab merge requests and GitHub pull requests alike; "MR" below means either.
 1. **Never commit directly to `main`/`master`.** All work starts from `develop`.
 2. **pre-commit runs on every commit.** Never use `--no-verify` or `SKIP=`.
 3. **Pipelines must be green.** A push is not done until its pipeline passes.
-4. **Commit messages are small and plain.** No AI attribution, no planning labels.
+4. **Commit messages are small and plain.** No AI attribution, no planning labels,
+   and no AI/bot identity as commit author.
 5. **One branch, one MR.** If an MR is already open for the branch, push to it.
    Do not open a second one.
 
@@ -47,7 +48,32 @@ Lowercase, hyphens, short (`fix/login-timeout`, not `fix/fix-the-login-issue-fro
 Merge requests target `develop`. Only release/hotfix flows target `main`, and
 only when the user asks for it.
 
-## 2. Make sure pre-commit is active
+## 2. Check the commit author
+
+Agent environments often set a bot identity (e.g. `Claude <noreply@anthropic.com>`).
+That is AI attribution too. Check before the first commit:
+
+```bash
+git var GIT_AUTHOR_IDENT
+git var GIT_COMMITTER_IDENT
+```
+
+If either names an AI or bot (Claude, Anthropic, Copilot, OpenAI, GPT,
+Gemini, Cursor, `noreply@anthropic.com`, `[bot]`, etc.):
+
+- Use the user's identity if you know it (their global git config, the
+  remote's account, or what they've told you), set **per repo**:
+  ```bash
+  git config user.name "<user name>"
+  git config user.email "<user email>"
+  ```
+- If you don't know it, ask the user before committing. Don't guess an email.
+- Don't change `--global` config unless the user asks.
+
+Exception: a repo whose owner has said an AI author is fine there. Mark it with
+`git config workflow.allowAiAuthor true` so the commit-msg hook allows it.
+
+## 3. Make sure pre-commit is active
 
 Check once per clone, before the first commit:
 
@@ -69,7 +95,7 @@ test -f .pre-commit-config.yaml && pre-commit install --install-hooks \
 - If a hook **fails**, fix the cause. Never bypass it with `--no-verify`,
   `SKIP=…`, or by editing the hook config to make it pass.
 
-## 3. Commit messages
+## 4. Commit messages
 
 See `references/commit-messages.md` for examples. The short version:
 
@@ -104,10 +130,10 @@ empty cart (SHOP-142)`).
 The same rules apply to **MR titles and descriptions**: no AI attribution,
 no planning labels. MR title follows the commit subject format.
 
-`scripts/check-commit-msg.sh` enforces the "never" list. Wire it in as a
+`scripts/check-commit-msg.sh` enforces the "never" list and the author check. Wire it in as a
 `commit-msg` hook (see the bottom of this file).
 
-## 4. Push and open (or update) the MR
+## 5. Push and open (or update) the MR
 
 ```bash
 git push -u origin HEAD
@@ -132,7 +158,7 @@ tested. Follow the repo's MR/PR template if it has one.
 Never force-push a branch other people have pulled. On your own unreviewed
 branch, `--force-with-lease` is acceptable; never plain `--force`.
 
-## 5. Keep the pipeline green
+## 6. Keep the pipeline green
 
 **Before pushing**, run locally whatever the pipeline runs (look in
 `.gitlab-ci.yml`, `.github/workflows/`, `Makefile`, `package.json` scripts):
@@ -165,6 +191,7 @@ so to the user with the failing job and the evidence, instead of widening the MR
 
 Before each commit:
 - [ ] On a branch based on `develop` (not `main`, not `develop` itself)
+- [ ] Author and committer are the user, not an AI/bot identity
 - [ ] `pre-commit` installed and passing on the changed files
 - [ ] One logical change; subject ≤ 50 chars, imperative, typed
 - [ ] No AI attribution, no M1/P1/phase/plan wording
