@@ -9,6 +9,7 @@ specific job the way we want it done. Each skill is a folder with a `SKILL.md`
 | Skill | What it covers |
 |---|---|
 | [git-workflow](skills/git-workflow/SKILL.md) | Branching from `develop`, pre-commit, small clean commit messages, pushing to open MRs, keeping pipelines green |
+| [python-secure-coding](skills/python-secure-coding/SKILL.md) | Latest Python and packages, ruff, bandit, pip-audit, secure coding patterns |
 
 ## Layout
 

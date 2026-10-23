@@ -1,0 +1,25 @@
+# Add under `repos:` in .pre-commit-config.yaml, then run
+# `pre-commit autoupdate` so every rev is the latest release.
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.17.2
+  hooks:
+    - id: ruff-check
+      args: [--fix]
+    - id: ruff-format
+
+- repo: https://github.com/PyCQA/bandit
+  rev: 1.9.4
+  hooks:
+    - id: bandit
+      args: [-c, pyproject.toml]
+      additional_dependencies: ["bandit[toml]"]
+
+- repo: https://github.com/pypa/pip-audit
+  rev: v2.10.1
+  hooks:
+    - id: pip-audit
+
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v2.4.0
+  hooks:
+    - id: mypy

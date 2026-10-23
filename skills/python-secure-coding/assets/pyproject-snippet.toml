@@ -1,0 +1,35 @@
+# Replace 3.X / py3X with the latest stable Python
+# (scripts/check_python_security.py --only python prints it).
+
+[project]
+requires-python = ">=3.X"
+
+[tool.ruff]
+target-version = "py3X"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+  "E", "W",   # pycodestyle
+  "F",        # pyflakes
+  "I",        # isort
+  "B",        # bugbear
+  "S",        # bandit rules
+  "UP",       # pyupgrade to the target version
+  "SIM",      # simplify
+  "PTH",      # pathlib over os.path
+  "RUF",      # ruff-specific
+  "N",        # naming
+  "C4",       # comprehensions
+  "PL",       # pylint
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "PLR2004"]   # asserts and magic numbers are fine in tests
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv", "venv", "build", "dist"]
+
+[tool.mypy]
+python_version = "3.X"
+strict = true
