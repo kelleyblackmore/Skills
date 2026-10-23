@@ -42,6 +42,18 @@ if printf '%s\n' "$msg" | grep -qiE "$plan_pattern"; then
   err "contains planning labels (M1, P1, phase, step N, 'as planned', WIP); describe the change instead"
 fi
 
+# Author/committer identity. Opt out per repo with:
+#   git config workflow.allowAiAuthor true
+ai_ident='claude|anthropic|copilot|openai|chatgpt|gpt-?[0-9]|gemini|cursor|codeium|\[bot\]'
+if [ "$(git config --bool workflow.allowAiAuthor || echo false)" != "true" ]; then
+  for var in GIT_AUTHOR_IDENT GIT_COMMITTER_IDENT; do
+    ident=$(git var "$var" 2>/dev/null | sed 's/>.*/>/' || true)
+    if printf '%s' "$ident" | grep -qiE "$ai_ident"; then
+      err "$var is an AI/bot identity ($ident); set git config user.name/user.email to the user"
+    fi
+  done
+fi
+
 if [ "$fail" -ne 0 ]; then
   echo "commit-msg: subject was: $subject" >&2
   exit 1
