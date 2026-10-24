@@ -71,8 +71,9 @@ still required `typescript <6.1`, so the latest usable TypeScript was 6.0.x:
 ```bash
 npm view typescript-eslint@latest peerDependencies
 npm i -D 'typescript@<6.1'
-``` Commit upgrades separately
-(`build: upgrade dependencies`).
+```
+
+Commit upgrades separately (`build: upgrade dependencies`).
 
 **Supply chain:**
 
