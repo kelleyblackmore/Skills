@@ -1,5 +1,5 @@
 // Fetching, validating and installing skills. No VS Code imports, so it is unit-testable.
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { lstat, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -233,9 +233,35 @@ export async function conflictingFiles(root: string, skill: Skill): Promise<stri
 }
 
 /**
- * Write a downloaded skill to <root>/<skill>. Each file is written to a temp file and
- * renamed into place. Files not in the index are left alone. Refuses to write through a
- * symlinked skill folder, since that is usually a link to a clone of the skills repo.
+ * Refuse if the skill folder, or any existing folder between it and `dir`, is a symlink.
+ * Folders that do not exist yet are fine: mkdir creates them as real directories.
+ */
+async function assertNoSymlinks(skillDir: string, dir: string): Promise<void> {
+  const rel = path.relative(skillDir, dir);
+  let current = skillDir;
+  for (const seg of ["", ...(rel === "" ? [] : rel.split(path.sep))]) {
+    current = seg === "" ? current : path.join(current, seg);
+    try {
+      // eslint-disable-next-line security/detect-non-literal-fs-filename -- path comes from resolveInside() or a validated skill name
+      if ((await lstat(current)).isSymbolicLink()) {
+        fail(`${current} is a symlink; refusing to write through it`);
+      }
+    } catch (err) {
+      if (err instanceof SkillError) throw err;
+      if ((err as NodeJS.ErrnoException).code === "ENOENT") return;
+      throw err;
+    }
+  }
+}
+
+/**
+ * Write a downloaded skill to <root>/<skill>. Files not in the index are left alone.
+ *
+ * Every folder on the way to each file must be a real directory, not a symlink (a
+ * symlinked skill folder is usually a link to a clone of the skills repo; a symlinked
+ * subfolder could point anywhere). Each file goes to a new randomly named temp file,
+ * created exclusively so an existing file or symlink is never followed, then renamed
+ * into place.
  */
 export async function writeSkill(
   root: string,
@@ -243,28 +269,24 @@ export async function writeSkill(
   contents: Map<string, Uint8Array>,
 ): Promise<void> {
   const skillDir = path.resolve(root, skill.name);
-  try {
-    // eslint-disable-next-line security/detect-non-literal-fs-filename -- path comes from resolveInside() or a validated skill name
-    if ((await lstat(skillDir)).isSymbolicLink()) {
-      fail(`${skillDir} is a symlink; update its source instead of overwriting it`);
-    }
-  } catch (err) {
-    if (err instanceof SkillError) throw err;
-  }
   for (const file of skill.files) {
     const data = contents.get(file.path);
     if (data === undefined) fail(`missing downloaded content for ${file.path}`);
     const target = resolveInside(root, skill.name, file.path);
+    await assertNoSymlinks(skillDir, path.dirname(target));
     // eslint-disable-next-line security/detect-non-literal-fs-filename -- path comes from resolveInside() or a validated skill name
     await mkdir(path.dirname(target), { recursive: true });
-    const tmp = `${target}.agent-skills-tmp`;
+    const tmp = `${target}.${randomBytes(8).toString("hex")}.agent-skills-tmp`;
+    let created = false;
     try {
       // eslint-disable-next-line security/detect-non-literal-fs-filename -- path comes from resolveInside() or a validated skill name
-      await writeFile(tmp, data, { mode: file.executable ? 0o755 : 0o644 });
+      await writeFile(tmp, data, { mode: file.executable ? 0o755 : 0o644, flag: "wx" });
+      created = true;
       // eslint-disable-next-line security/detect-non-literal-fs-filename -- path comes from resolveInside() or a validated skill name
       await rename(tmp, target);
+      created = false;
     } finally {
-      await rm(tmp, { force: true });
+      if (created) await rm(tmp, { force: true });
     }
   }
 }

@@ -227,6 +227,38 @@ describe("install state and writing", () => {
   );
 });
 
+describe("symlinks inside a skill folder", { skip: process.platform === "win32" }, () => {
+  it("refuses to write through a symlinked subdirectory", async () => {
+    const root = await tempRoot();
+    const outside = await tempRoot();
+    await writeFile(path.join(outside, "run.sh"), "precious\n");
+    await mkdir(path.join(root, "demo"));
+    await symlink(outside, path.join(root, "demo", "scripts"));
+    const skill = demoSkill();
+
+    await assert.rejects(
+      writeSkill(root, skill, await downloadSkill(INDEX_URL, skill, fakeFetch())),
+      /symlink/,
+    );
+    assert.equal(await readFile(path.join(outside, "run.sh"), "utf8"), "precious\n");
+  });
+
+  it("does not follow a planted temp-file symlink", async () => {
+    const root = await tempRoot();
+    const outside = await tempRoot();
+    const victim = path.join(outside, "victim.txt");
+    await writeFile(victim, "precious\n");
+    await mkdir(path.join(root, "demo"));
+    await symlink(victim, path.join(root, "demo", "SKILL.md.agent-skills-tmp"));
+    const skill = demoSkill();
+
+    await writeSkill(root, skill, await downloadSkill(INDEX_URL, skill, fakeFetch()));
+
+    assert.equal(await readFile(victim, "utf8"), "precious\n");
+    assert.equal(await skillState(root, skill), "current");
+  });
+});
+
 describe("expandHome", () => {
   it("expands ~ and ~/", () => {
     assert.equal(expandHome("~", "/home/u"), "/home/u");
