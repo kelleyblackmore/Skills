@@ -45,3 +45,44 @@ jobs:
             skills/git-workflow/scripts/check-commit-msg.sh "$RUNNER_TEMP/msg" || { echo "  in $sha"; status=1; }
           done
           exit $status
+
+  extension:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: extensions/vscode
+    env:
+      SKILLS_SITE_DIR: ${{ github.workspace }}/_site
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.15"
+      - name: Build the site the extension reads
+        working-directory: .
+        run: |
+          pip install -r requirements-site.txt
+          python3 scripts/build_site.py
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: extensions/vscode/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm audit --audit-level=high
+      - run: npm audit signatures
+      - run: npm run package
+      - name: End-to-end in VS Code
+        run: xvfb-run -a npm run e2e
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: agent-skills-vsix
+          path: extensions/vscode/agent-skills.vsix
+          if-no-files-found: error
