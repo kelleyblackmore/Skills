@@ -92,7 +92,7 @@ a secrets manager), never baked in.
 ```bash
 hadolint Dockerfile
 docker build -t app:check .
-trivy image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed app:check
+trivy image --severity HIGH,CRITICAL --exit-code 1 app:check
 trivy config --exit-code 1 .          # Dockerfile / compose misconfigurations
 ```
 
@@ -101,6 +101,8 @@ trivy config --exit-code 1 .          # Dockerfile / compose misconfigurations
   above: `# hadolint ignore=DL3008` plus a comment why.
 - A Trivy finding with no fix available: list it in `.trivyignore` with the
   CVE ID, a reason, and an expiry date (`exp:YYYY-MM-DD`), and tell the user.
+  Never use `--ignore-unfixed`: it hides every unfixed finding with no record
+  of who accepted the risk or until when.
 
 ## 5. Runtime (compose / Kubernetes)
 

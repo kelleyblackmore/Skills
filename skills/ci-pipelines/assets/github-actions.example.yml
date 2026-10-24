@@ -75,7 +75,6 @@ jobs:
         with:
           image-ref: app:${{ github.sha }}
           severity: HIGH,CRITICAL
-          ignore-unfixed: true
           exit-code: "1"
 
   # Example of untrusted input handled safely: via env, quoted.
