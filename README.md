@@ -17,6 +17,9 @@ specific job the way we want it done. Each skill is a folder with a `SKILL.md`
 
 Browse them at **https://kelleyblackmore.github.io/Skills/**.
 
+**One-click install:** the [Agent Skills extension](extensions/vscode/README.md) for VS Code,
+Cursor and Windsurf adds a skill to the open project (or your home folder) from a sidebar.
+
 ## Layout
 
 ```
@@ -28,6 +31,7 @@ skills/
 templates/SKILL.md    # starting point for a new skill
 scripts/              # repo tooling (validation, site build)
 site/                 # GitHub Pages template, styles, intro
+extensions/vscode/    # Agent Skills extension for VS Code, Cursor, Windsurf
 ```
 
 ## Using the skills
@@ -68,6 +72,12 @@ CI runs pre-commit and checks commit messages on every PR.
 
 The GitHub Pages site is generated from `skills/` by `scripts/build_site.py`
 and deployed by `.github/workflows/pages.yml` on every push to `develop`.
+Alongside the pages it publishes:
+
+- `skills.json`: an index of every skill with each file's path, size and SHA-256
+  (what the extension reads)
+- `raw/<skill>/<file>`: the skill files themselves
+- `zips/<skill>.zip`: one ZIP per skill, ready to upload to Claude desktop / claude.ai
 
 ```bash
 pip install -r requirements-site.txt
