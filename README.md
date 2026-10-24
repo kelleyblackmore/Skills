@@ -10,6 +10,12 @@ specific job the way we want it done. Each skill is a folder with a `SKILL.md`
 |---|---|
 | [git-workflow](skills/git-workflow/SKILL.md) | Branching from `develop`, pre-commit, small clean commit messages, pushing to open MRs, keeping pipelines green |
 | [python-secure-coding](skills/python-secure-coding/SKILL.md) | Latest Python and packages, ruff, bandit, pip-audit, secure coding patterns |
+| [js-ts-secure-coding](skills/js-ts-secure-coding/SKILL.md) | Latest Node LTS and packages, ESLint security rules, strict TypeScript, npm audit, secure patterns |
+| [secure-dockerfiles](skills/secure-dockerfiles/SKILL.md) | Pinned latest base images, multi-stage, non-root, no secrets in layers, hadolint, Trivy |
+| [ci-pipelines](skills/ci-pipelines/SKILL.md) | Standard CI stages, SHA-pinned actions, least-privilege tokens, OIDC, actionlint, zizmor |
+| [terraform-security](skills/terraform-security/SKILL.md) | Latest Terraform/OpenTofu and providers, tflint, checkov, remote state, secure resource defaults |
+
+Browse them at **https://kelleyblackmore.github.io/Skills/**.
 
 ## Layout
 
@@ -20,7 +26,8 @@ skills/
     references/       # optional: longer docs the skill links to
     scripts/          # optional: helper scripts the skill runs
 templates/SKILL.md    # starting point for a new skill
-scripts/              # repo tooling (validation)
+scripts/              # repo tooling (validation, site build)
+site/                 # GitHub Pages template, styles, intro
 ```
 
 ## Using the skills
@@ -56,3 +63,14 @@ pre-commit install   # installs pre-commit and commit-msg hooks
 
 Work happens on `develop` (or branches off it); MRs target `develop`.
 CI runs pre-commit and checks commit messages on every PR.
+
+## Site
+
+The GitHub Pages site is generated from `skills/` by `scripts/build_site.py`
+and deployed by `.github/workflows/pages.yml` on every push to `develop`.
+
+```bash
+pip install -r requirements-site.txt
+python3 scripts/build_site.py
+python3 -m http.server -d _site
+```
