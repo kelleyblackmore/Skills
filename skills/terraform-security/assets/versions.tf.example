@@ -1,0 +1,33 @@
+# Versions were the latest when written; look them up again (see SKILL.md).
+terraform {
+  required_version = ">= 1.17.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.70"
+    }
+  }
+
+  backend "s3" {
+    bucket       = "example-terraform-state"
+    key          = "app/prod/terraform.tfstate"
+    region       = "us-east-1"
+    encrypt      = true
+    kms_key_id   = "alias/terraform-state"
+    use_lockfile = true
+  }
+}
+
+provider "aws" {
+  region = var.region
+
+  # Credentials come from the environment / OIDC role, never from arguments.
+  default_tags {
+    tags = {
+      owner       = var.owner
+      environment = var.environment
+      managed-by  = "terraform"
+    }
+  }
+}
