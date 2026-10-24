@@ -20,8 +20,10 @@ const value = JSON.parse(text);       // then validate (zod, valibot)
 exec(`git log ${branch}`);
 spawn("sh", ["-c", cmd]);
 
-// Good: no shell, argument array, "--" before user values
-execFile("git", ["log", "--", branch], { timeout: 30_000 });
+// Good: no shell, argument array; --end-of-options stops a value like
+// "--output=/etc/x" being read as an option. (A bare "--" would make git
+// treat the branch as a file path.)
+execFile("git", ["log", "--end-of-options", branch, "--"], { timeout: 30_000 });
 ```
 
 ## SQL / NoSQL

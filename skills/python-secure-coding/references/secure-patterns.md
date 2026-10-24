@@ -22,7 +22,10 @@ subprocess.run(f"git log {branch}", shell=True)
 os.system("rm -rf " + path)
 
 # Good – argument list, no shell, check result, absolute or validated binary
-subprocess.run(["git", "log", "--", branch], check=True, timeout=30)
+# --end-of-options stops a branch like "--output=/etc/x" being read as an
+# option; the trailing "--" ends revisions (a bare "--" before the branch
+# would make git treat it as a file path).
+subprocess.run(["git", "log", "--end-of-options", branch, "--"], check=True, timeout=30)
 ```
 
 If a shell is truly needed, quote every argument with `shlex.quote`.
