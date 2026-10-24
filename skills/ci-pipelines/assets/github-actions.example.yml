@@ -55,6 +55,8 @@ jobs:
       - run: pip install pip-audit bandit
       - run: pip-audit -r requirements.txt
       - run: bandit -c pyproject.toml -r . -q
+      # Dependabot doesn't update images inside run: steps; re-pin this
+      # digest when upgrading (see SKILL.md) or let Renovate manage it.
       - name: Secret scan
         run: |
           docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f \

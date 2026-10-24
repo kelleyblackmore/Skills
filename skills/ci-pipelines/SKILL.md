@@ -53,6 +53,19 @@ git ls-remote https://github.com/actions/checkout "refs/tags/$tag^{}" "refs/tags
 (Use the `^{}` line if present: that's the commit behind an annotated tag.)
 Let Dependabot or Renovate keep SHAs current (`assets/dependabot.example.yml`).
 
+Dependabot does not update container images referenced inside `run:` steps
+(e.g. `docker run image@sha256:…`) or GitLab `image:` keys. Pin them by
+digest anyway, then either let Renovate update them (its `regex` manager can
+match `image:tag@sha256:digest`) or re-pin them by hand whenever the
+pipeline's tools are upgraded:
+
+```bash
+docker buildx imagetools inspect ghcr.io/gitleaks/gitleaks:v8.30.1   # prints the digest
+```
+
+Prefer `docker run` of a pinned image over a vendor action that needs a
+license key or write permissions just to run a scanner.
+
 **Permissions** at the top of every workflow, widened per job only as needed:
 
 ```yaml
