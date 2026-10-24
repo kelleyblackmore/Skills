@@ -11,5 +11,6 @@ any agent that can read Markdown instructions.
 
 ```bash
 git clone https://github.com/kelleyblackmore/Skills ~/src/skills
+mkdir -p ~/.claude/skills
 ln -s ~/src/skills/skills/git-workflow ~/.claude/skills/git-workflow
 ```

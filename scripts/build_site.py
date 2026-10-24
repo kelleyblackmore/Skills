@@ -98,7 +98,8 @@ def build_skill(skill_dir):
         '<nav class="crumbs"><a href="../">All skills</a> / ' + html.escape(name) + "</nav>",
         f'<p class="lede">{html.escape(description)}</p>',
         '<div class="install"><span>Install</span>'
-        f"<code>ln -s &quot;$PWD/skills/{name}&quot; ~/.claude/skills/{name}</code>"
+        "<code>mkdir -p ~/.claude/skills &amp;&amp; "
+        f"ln -s &quot;$PWD/skills/{name}&quot; ~/.claude/skills/{name}</code>"
         f'<a href="{tree_url}">View on GitHub</a></div>',
         f'<article class="doc">{skill_html}</article>',
     ]
