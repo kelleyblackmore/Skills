@@ -29,7 +29,7 @@
   "extensionKind": [
     "workspace"
   ],
-  "main": "./dist/extension.js",
+  "main": "./dist/extension.cjs",
   "activationEvents": [],
   "contributes": {
     "viewsContainers": {
