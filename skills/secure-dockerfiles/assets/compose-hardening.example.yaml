@@ -1,0 +1,25 @@
+services:
+  app:
+    image: registry.example.com/app:1.4.2@sha256:<digest>
+    user: "10001:10001"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      LOG_LEVEL: info
+    secrets:
+      - api_key
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+secrets:
+  api_key:
+    file: ./secrets/api_key   # not committed; see .gitignore

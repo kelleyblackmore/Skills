@@ -1,0 +1,18 @@
+# Start from deny-all and allow only what the build needs.
+*
+!src/
+!requirements.txt
+!pyproject.toml
+!uv.lock
+!package.json
+!package-lock.json
+
+# Never send these to the build context, even if allowed above.
+**/.env
+**/.env.*
+**/*.pem
+**/*.key
+**/id_rsa*
+**/.git
+**/__pycache__
+**/node_modules

@@ -1,0 +1,27 @@
+# syntax=docker/dockerfile:1
+# Replace <digest> with the current digest:
+#   docker buildx imagetools inspect python:3.15-slim
+
+FROM python:3.15-slim@sha256:<digest> AS build
+ENV PIP_NO_CACHE_DIR=1 \
+    PYTHONDONTWRITEBYTECODE=1
+WORKDIR /app
+COPY requirements.txt ./
+RUN python -m venv /opt/venv \
+ && /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
+COPY src/ ./src/
+
+FROM python:3.15-slim@sha256:<digest>
+ENV PATH=/opt/venv/bin:$PATH \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+RUN groupadd --system --gid 10001 app \
+ && useradd --system --uid 10001 --gid app --no-create-home --shell /usr/sbin/nologin app
+WORKDIR /app
+COPY --from=build /opt/venv /opt/venv
+COPY --from=build --chown=10001:10001 /app/src ./src
+USER 10001
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2)"]
+ENTRYPOINT ["python", "-m", "src.app"]
