@@ -7,7 +7,13 @@ Each skill is a folder with a `SKILL.md` (frontmatter + instructions), plus
 optional references, templates, and scripts. They work with Claude Code and
 any agent that can read Markdown instructions.
 
-**Use one** by symlinking it into your agent's skills directory:
+**One click:** install the [Agent Skills extension](https://github.com/kelleyblackmore/Skills/tree/develop/extensions/vscode)
+for VS Code, Cursor or Windsurf and use **Add to Project** in its sidebar.
+
+**Claude desktop / claude.ai:** use **Download ZIP** on a skill's page, then upload it under
+Skills in Claude's settings.
+
+**Or by hand**, symlink a skill into your agent's skills directory:
 
 ```bash
 git clone https://github.com/kelleyblackmore/Skills ~/src/skills

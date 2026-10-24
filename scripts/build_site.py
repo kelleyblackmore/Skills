@@ -6,10 +6,15 @@ python3 scripts/build_site.py            # writes _site/
 python3 -m http.server -d _site          # preview
 """
 
+import hashlib
 import html
+import json
+import os
 import re
 import shutil
+import subprocess  # nosec B404
 import sys
+import zipfile
 from pathlib import Path
 
 import markdown
@@ -26,6 +31,9 @@ REPO_URL = "https://github.com/kelleyblackmore/Skills"
 BRANCH = "develop"
 MD_EXTENSIONS = ["pymdownx.superfences", "pymdownx.highlight", "tables", "toc", "sane_lists"]
 MD_CONFIG = {"pymdownx.highlight": {"guess_lang": False, "css_class": "highlight"}}
+INDEX_SCHEMA = 1
+# Fixed timestamp so a skill's ZIP only changes when its files do.
+ZIP_DATE = (2020, 1, 1, 0, 0, 0)
 
 
 def split_frontmatter(text):
@@ -37,6 +45,70 @@ def split_frontmatter(text):
         key, _, value = line.partition(":")
         fields[key.strip()] = value.strip()
     return fields, text[end + 5 :]
+
+
+def skill_files(skill_dir):
+    """Every file in a skill, SKILL.md included, skipping hidden files and caches."""
+    return sorted(
+        p
+        for p in skill_dir.rglob("*")
+        if p.is_file()
+        and not any(
+            part.startswith(".") or part == "__pycache__" for part in p.relative_to(skill_dir).parts
+        )
+    )
+
+
+def sha256(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def publish_skill(name, description, skill_dir):
+    """Copy a skill's files to raw/, zip it to zips/, and return its skills.json entry."""
+    files = []
+    zip_path = OUT / "zips" / f"{name}.zip"
+    zip_path.parent.mkdir(exist_ok=True)
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        for path in skill_files(skill_dir):
+            rel = path.relative_to(skill_dir).as_posix()
+            data = path.read_bytes()
+            executable = bool(path.stat().st_mode & 0o111)
+
+            raw = OUT / "raw" / name / rel
+            raw.parent.mkdir(parents=True, exist_ok=True)
+            raw.write_bytes(data)
+
+            info = zipfile.ZipInfo(f"{name}/{rel}", ZIP_DATE)
+            info.external_attr = (0o755 if executable else 0o644) << 16
+            info.compress_type = zipfile.ZIP_DEFLATED
+            zf.writestr(info, data)
+
+            files.append(
+                {"path": rel, "sha256": sha256(data), "size": len(data), "executable": executable}
+            )
+
+    digest = sha256("".join(f["path"] + f["sha256"] for f in files).encode())
+    return {
+        "name": name,
+        "description": description,
+        "version": digest[:12],
+        "page": f"{name}/",
+        "zip": {"path": f"zips/{name}.zip", "sha256": sha256(zip_path.read_bytes())},
+        "files": files,
+    }
+
+
+def current_commit():
+    if sha := os.environ.get("GITHUB_SHA"):
+        return sha
+    git = shutil.which("git")
+    if git is None:
+        return None
+    # Fixed argument list, absolute git path, no shell.
+    out = subprocess.run(  # noqa: S603  # nosec B603
+        [git, "-C", str(ROOT), "rev-parse", "HEAD"], capture_output=True, text=True, check=False
+    )
+    return out.stdout.strip() or None
 
 
 def render_md(text):
@@ -82,13 +154,7 @@ def build_skill(skill_dir):
     name = fields["name"]
     description = fields["description"]
 
-    extra = sorted(
-        p
-        for p in skill_dir.rglob("*")
-        if p.is_file()
-        and p.name != "SKILL.md"
-        and not any(part.startswith(".") or part == "__pycache__" for part in p.parts)
-    )
+    extra = [p for p in skill_files(skill_dir) if p.name != "SKILL.md" or p.parent != skill_dir]
     rels = {p.relative_to(skill_dir).as_posix() for p in extra}
 
     skill_html = link_local_files(render_md(body_md), rels)
@@ -100,6 +166,7 @@ def build_skill(skill_dir):
         '<div class="install"><span>Install</span>'
         "<code>mkdir -p ~/.claude/skills &amp;&amp; "
         f"ln -s &quot;$PWD/skills/{name}&quot; ~/.claude/skills/{name}</code>"
+        f'<a href="../zips/{name}.zip">Download ZIP</a>'
         f'<a href="{tree_url}">View on GitHub</a></div>',
         f'<article class="doc">{skill_html}</article>',
     ]
@@ -122,7 +189,7 @@ def build_skill(skill_dir):
     out_dir = OUT / name
     out_dir.mkdir(parents=True)
     (out_dir / "index.html").write_text(page(name, description, "\n".join(parts), depth=1))
-    return name, description
+    return publish_skill(name, description, skill_dir)
 
 
 def first_sentence(text):
@@ -131,9 +198,9 @@ def first_sentence(text):
 
 def build_index(skills):
     cards = "\n".join(
-        f'<a class="card" href="{name}/"><h2>{html.escape(name)}</h2>'
-        f"<p>{html.escape(first_sentence(desc))}</p></a>"
-        for name, desc in skills
+        f'<a class="card" href="{s["name"]}/"><h2>{html.escape(s["name"])}</h2>'
+        f"<p>{html.escape(first_sentence(s['description']))}</p></a>"
+        for s in skills
     )
     intro = (SITE_SRC / "intro.md").read_text()
     body = f'<div class="doc intro">{render_md(intro)}</div><div class="cards">{cards}</div>'
@@ -157,6 +224,9 @@ def main():
 
     skills = [build_skill(d) for d in sorted(SKILLS_DIR.iterdir()) if d.is_dir()]
     build_index(skills)
+    index = {"schema": INDEX_SCHEMA, "repository": REPO_URL, "commit": current_commit()}
+    index["skills"] = skills
+    (OUT / "skills.json").write_text(json.dumps(index, indent=2) + "\n")
     print(f"built {len(skills)} skill pages into {OUT.relative_to(ROOT)}/")
     return 0
 

@@ -103,7 +103,7 @@ main.wrap { padding-top: 32px; padding-bottom: 48px; }
 
 .install span { font-weight: 600; }
 .install code { overflow-wrap: anywhere; }
-.install a { margin-left: auto; }
+.install a:first-of-type { margin-left: auto; }
 
 .doc h1 { font-size: 1.8rem; }
 .doc h2 { margin-top: 2rem; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
@@ -165,5 +165,5 @@ code {
 
 @media (max-width: 600px) {
   .files-index { columns: 1; }
-  .install a { margin-left: 0; }
+  .install a:first-of-type { margin-left: 0; }
 }
