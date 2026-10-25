@@ -1,0 +1,22 @@
+# .hadolint.yaml
+failure-threshold: info        # every finding fails the build, not just errors
+format: tty
+strict-labels: true
+label-schema:                  # OCI labels every image must carry
+  org.opencontainers.image.source: url
+  org.opencontainers.image.revision: hash
+  org.opencontainers.image.version: text
+trustedRegistries:             # FROM may only pull from these
+  - docker.io
+  - registry.access.redhat.com
+  - ghcr.io
+override:
+  error:
+    - DL3002                   # last USER is root
+    - DL3007                   # FROM ...:latest
+    - DL3020                   # ADD instead of COPY for files
+    - DL3025                   # shell-form CMD/ENTRYPOINT
+    - DL4006                   # pipe without pipefail
+# Ignore a rule only on its line, with a reason on the line above:
+#   # pip version is pinned by the lock file, not here
+#   # hadolint ignore=DL3013
