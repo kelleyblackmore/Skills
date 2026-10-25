@@ -10,8 +10,8 @@ so it can't gate a build on its own. Run this on the SBOM it writes:
 
 A vulnerability is accepted only when hoppr-cop recorded an analysis for it from
 analysis.assessment.yml with state not_affected, false_positive, resolved, or
-resolved_with_pedigree. Accepted findings older than --assessment-max-age days
-fail again so they get re-reviewed. Standard library only.
+resolved_with_pedigree. Accepted findings with no date, or older than
+--assessment-max-age days, fail again so they get re-reviewed. Standard library only.
 """
 
 from __future__ import annotations
@@ -66,7 +66,9 @@ def evaluate(sbom: dict, fail_on: str, max_age: int) -> tuple[list[str], list[st
         line = f"{severity:<8} {vid:<22} {package_names(vuln)}"
         if state in ACCEPTED_STATES:
             age = assessment_age_days(analysis)
-            if age is not None and age > max_age:
+            if age is None:
+                blocking.append(f"{line}  (assessment has no date; add one)")
+            elif age > max_age:
                 blocking.append(f"{line}  (assessment is {age} days old; re-review it)")
             else:
                 accepted.append(f"{line}  ({state}: {analysis.get('justification', '-')})")
