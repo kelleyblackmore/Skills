@@ -12,6 +12,7 @@ specific job the way we want it done. Each skill is a folder with a `SKILL.md`
 | [python-secure-coding](skills/python-secure-coding/SKILL.md) | Latest Python and packages, ruff, bandit, pip-audit, secure coding patterns |
 | [js-ts-secure-coding](skills/js-ts-secure-coding/SKILL.md) | Latest Node LTS and packages, ESLint security rules, strict TypeScript, npm audit, secure patterns |
 | [secure-dockerfiles](skills/secure-dockerfiles/SKILL.md) | Pinned latest base images, multi-stage, non-root, no secrets in layers, hadolint, Trivy |
+| [container-build-scan](skills/container-build-scan/SKILL.md) | Image pipeline: hadolint, labelled build, syft SBOM, hoppr-cop scan with a severity gate, OpenSCAP STIG/CIS, sign and push |
 | [ci-pipelines](skills/ci-pipelines/SKILL.md) | Standard CI stages, SHA-pinned actions, least-privilege tokens, OIDC, actionlint, zizmor |
 | [terraform-security](skills/terraform-security/SKILL.md) | Latest Terraform/OpenTofu and providers, tflint, checkov, remote state, secure resource defaults |
 | [go-secure-coding](skills/go-secure-coding/SKILL.md) | Latest Go and modules, golangci-lint with gosec, govulncheck, race detector, secure Go patterns |
