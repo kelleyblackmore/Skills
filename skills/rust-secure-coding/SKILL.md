@@ -59,7 +59,9 @@ cargo install cargo-edit && cargo upgrade --incompatible   # bump major versions
 
 ## 3. Lint
 
-Use the `[lints]` table in `assets/Cargo-lints.toml`. Then:
+Use the `[lints]` table in `assets/Cargo-lints.toml`. In a workspace, put it
+under `[workspace.lints]` in the root and add `[lints] workspace = true` to
+every member crate; members don't inherit it otherwise. Then:
 
 ```bash
 cargo fmt --check

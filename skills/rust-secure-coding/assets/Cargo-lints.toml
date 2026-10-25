@@ -1,4 +1,9 @@
-# Add to Cargo.toml (or [workspace.lints] in a workspace root).
+# Add to Cargo.toml. In a workspace, put these under [workspace.lints.rust] /
+# [workspace.lints.clippy] in the root Cargo.toml, and add this to EVERY member
+# crate's Cargo.toml, or the members get none of these lints:
+#
+#   [lints]
+#   workspace = true
 
 [lints.rust]
 unsafe_code = "forbid"             # remove for crates that genuinely need unsafe
