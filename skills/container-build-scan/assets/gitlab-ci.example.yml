@@ -41,11 +41,14 @@ build:
 sbom:
   stage: scan
   needs: [build]
-  image:
-    name: docker.io/anchore/syft:v1.55.0@sha256:4cc92b64ca74ffca4c94d4c8fcc01f217731375300be14d0b6eeb2e82eaa110a
-    entrypoint: [""]
+  # GitLab needs a shell in the job image; the anchore/syft image has none (FROM scratch).
+  image: docker.io/python:3.15-slim@sha256:533b0b2f9b5d46fd097091cf826f27902f1d6c3bca714b6dc74551356aa97a51
+  before_script:
+    - apt-get update -q && apt-get install -y -q --no-install-recommends curl ca-certificates
+    # Pin and verify checksums in real pipelines.
+    - curl -sSfL https://github.com/anchore/syft/releases/download/v1.55.0/syft_1.55.0_linux_amd64.tar.gz | tar xz -C /usr/local/bin syft
   script:
-    - /syft oci-archive:image.tar -o cyclonedx-json=sbom.cdx.json
+    - syft oci-archive:image.tar -o cyclonedx-json=sbom.cdx.json
   artifacts:
     paths: [sbom.cdx.json]
 
