@@ -14,6 +14,11 @@ specific job the way we want it done. Each skill is a folder with a `SKILL.md`
 | [secure-dockerfiles](skills/secure-dockerfiles/SKILL.md) | Pinned latest base images, multi-stage, non-root, no secrets in layers, hadolint, Trivy |
 | [ci-pipelines](skills/ci-pipelines/SKILL.md) | Standard CI stages, SHA-pinned actions, least-privilege tokens, OIDC, actionlint, zizmor |
 | [terraform-security](skills/terraform-security/SKILL.md) | Latest Terraform/OpenTofu and providers, tflint, checkov, remote state, secure resource defaults |
+| [go-secure-coding](skills/go-secure-coding/SKILL.md) | Latest Go and modules, golangci-lint with gosec, govulncheck, race detector, secure Go patterns |
+| [rust-secure-coding](skills/rust-secure-coding/SKILL.md) | Latest Rust and crates, clippy with strict lints, cargo-audit, cargo-deny, minimal unsafe |
+| [kubernetes-security](skills/kubernetes-security/SKILL.md) | Restricted pod security, pinned images, limits, least-privilege RBAC, default-deny network, kubeconform, kube-linter |
+| [secrets-management](skills/secrets-management/SKILL.md) | No secrets in git, gitleaks in pre-commit and CI, runtime loading, OIDC, leaked-secret response |
+| [code-review](skills/code-review/SKILL.md) | Reviewing PRs/MRs: what to check, verifying findings, severity labels, writing actionable comments |
 
 Browse them at **https://kelleyblackmore.github.io/Skills/**.
 
