@@ -1,0 +1,112 @@
+# .gitlab-ci.yml: lint, build, scan, then push and sign only if every gate passes.
+# Replace <digest> values: crane digest <image:tag>  (or docker buildx imagetools inspect)
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+stages: [lint, build, scan, publish]
+
+variables:
+  IMAGE: $CI_REGISTRY_IMAGE
+  OS_DISTRO: "rhel:9"                          # must match the base image
+  SSG_VERSION: "0.1.82"                        # latest ComplianceAsCode release
+  SSG_DATASTREAM: ssg-rhel9-ds.xml
+  SSG_PROFILE: xccdf_org.ssgproject.content_profile_stig_container
+
+hadolint:
+  stage: lint
+  image: docker.io/hadolint/hadolint:v2.15.1-debian@sha256:9a3944b7fddcb947d1ffd90829ac1a6e5c30479223358f249d8b96c7d0019e27
+  script:
+    - hadolint -c .hadolint.yaml Containerfile
+
+build:
+  stage: build
+  image: quay.io/podman/stable:<version>@sha256:<digest>
+  script:
+    - >
+      podman build --pull=always
+      --label org.opencontainers.image.source="$CI_PROJECT_URL"
+      --label org.opencontainers.image.revision="$CI_COMMIT_SHA"
+      --label org.opencontainers.image.version="$CI_COMMIT_REF_NAME"
+      -t "$IMAGE:$CI_COMMIT_SHA" -f Containerfile .
+    - podman save --format oci-archive -o image.tar "$IMAGE:$CI_COMMIT_SHA"
+  artifacts:
+    paths: [image.tar]
+    expire_in: 1 day
+
+sbom:
+  stage: scan
+  needs: [build]
+  # GitLab needs a shell in the job image; the anchore/syft image has none (FROM scratch).
+  image: docker.io/python:3.15-slim@sha256:533b0b2f9b5d46fd097091cf826f27902f1d6c3bca714b6dc74551356aa97a51
+  before_script:
+    - apt-get update -q && apt-get install -y -q --no-install-recommends curl ca-certificates
+    # Pin and verify checksums in real pipelines.
+    - curl -sSfL https://github.com/anchore/syft/releases/download/v1.55.0/syft_1.55.0_linux_amd64.tar.gz | tar xz -C /usr/local/bin syft
+  script:
+    - syft oci-archive:image.tar -o cyclonedx-json=sbom.cdx.json
+  artifacts:
+    paths: [sbom.cdx.json]
+
+vulnerabilities:
+  stage: scan
+  needs: [sbom]
+  image: docker.io/python:3.15-slim@sha256:533b0b2f9b5d46fd097091cf826f27902f1d6c3bca714b6dc74551356aa97a51
+  before_script:
+    - apt-get update -q && apt-get install -y -q --no-install-recommends curl ca-certificates
+    - pip install --no-cache-dir uv && uv tool install hoppr-cop --with setuptools
+    - export PATH="$HOME/.local/bin:$PATH"
+    # grype and trivy CLIs, which hoppr-cop calls. Pin and verify checksums in real pipelines.
+    - curl -sSfL https://github.com/anchore/grype/releases/download/v0.121.0/grype_0.121.0_linux_amd64.tar.gz | tar xz -C "$HOME/.local/bin" grype
+    - curl -sSfL https://github.com/aquasecurity/trivy/releases/download/v0.76.1/trivy_0.76.1_Linux-64bit.tar.gz | tar xz -C "$HOME/.local/bin" trivy
+  script:
+    - >
+      hoppr-cop -s grype -s trivy --os-distro "$OS_DISTRO" --assessment .
+      -f table -f html -f cyclone_dx -f gitlab -b app -d reports sbom.cdx.json
+    - python3 scripts/hopprcop_gate.py reports/app-enhanced.json --fail-on high
+  artifacts:
+    when: always
+    paths: [reports/]
+    reports:
+      dependency_scanning: reports/gl-dependency-scanning-report.json
+
+compliance:
+  stage: scan
+  needs: [build]
+  image: quay.io/podman/stable:<version>@sha256:<digest>
+  script:
+    - dnf install -y -q openscap-scanner openscap-utils unzip
+    - curl -sSfL -o ssg.zip "https://github.com/ComplianceAsCode/content/releases/download/v${SSG_VERSION}/scap-security-guide-${SSG_VERSION}.zip"
+    - unzip -j -o ssg.zip "*/${SSG_DATASTREAM}"
+    - podman load -i image.tar
+    - mkdir -p reports
+    - >
+      oscap-podman "$IMAGE:$CI_COMMIT_SHA" xccdf eval
+      --profile "$SSG_PROFILE" --tailoring-file container-tailoring.xml
+      --results-arf reports/oscap-arf.xml --report reports/oscap-report.html
+      "$SSG_DATASTREAM"
+  artifacts:
+    when: always
+    paths: [reports/]
+
+publish:
+  stage: publish
+  needs: [build, sbom, vulnerabilities, compliance]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_BRANCH == "develop"
+  image: quay.io/podman/stable:<version>@sha256:<digest>
+  id_tokens:
+    SIGSTORE_ID_TOKEN:
+      aud: sigstore
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | podman login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
+    - podman load -i image.tar
+    - podman push --digestfile digest "$IMAGE:$CI_COMMIT_SHA"
+    - DIGEST=$(cat digest)
+    - dnf install -y -q cosign
+    - cosign sign --yes "$IMAGE@$DIGEST"
+    - cosign attest --yes --type cyclonedx --predicate sbom.cdx.json "$IMAGE@$DIGEST"

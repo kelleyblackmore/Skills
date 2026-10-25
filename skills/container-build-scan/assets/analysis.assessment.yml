@@ -1,0 +1,25 @@
+# analysis.assessment.yml: accepted vulnerability risks, read by
+# `hoppr-cop --assessment <dir>`. Every entry needs all of these fields; hoppr-cop
+# rejects incomplete ones. hopprcop_gate.py fails entries older than
+# --assessment-max-age days (default 180), so they get re-reviewed.
+#
+# state:          not_affected | false_positive | resolved | resolved_with_pedigree
+#                 (exploitable and in_triage are recorded but still fail the gate)
+# justification:  code_not_present | code_not_reachable | requires_configuration |
+#                 requires_dependency | requires_environment | protected_by_compiler |
+#                 protected_at_runtime | protected_at_perimeter |
+#                 protected_by_mitigating_control
+# response:       can_not_fix | will_not_fix | update | rollback | workaround_available
+assessments:
+  - assessmentDate: 2026-10-25
+    vulnerability: CVE-2026-78408
+    state: not_affected
+    justification: code_not_reachable
+    response: will_not_fix
+    detail: >-
+      util-linux command-line tools are present in the base image but never run
+      by the service. Reviewed by the platform security team on 2026-10-25.
+    package:
+      type: deb
+      name: util-linux
+      version: 2.41.5-0+deb13u1
