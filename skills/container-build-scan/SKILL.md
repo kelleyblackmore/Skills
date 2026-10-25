@@ -131,7 +131,7 @@ oscap info --profiles ssg-rhel9-ds.xml            # list profiles
 sudo oscap-podman "$IMAGE:$GIT_SHA" xccdf eval \
   --profile xccdf_org.ssgproject.content_profile_stig \
   --tailoring-file container-tailoring.xml \
-  --results-arf arf.xml --report oscap-report.html \
+  --results results.xml --results-arf arf.xml --report oscap-report.html \
   ssg-rhel9-ds.xml
 ```
 
