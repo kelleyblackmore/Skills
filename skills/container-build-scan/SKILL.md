@@ -73,7 +73,10 @@ syft oci-archive:image.tar -o cyclonedx-json=sbom.cdx.json
 Note the OS syft detected, since hoppr-cop needs it:
 
 ```bash
-jq -r '.metadata.properties[]? | select(.name|test("syft:distro:(id|versionID)")) | .value' sbom.cdx.json
+jq -r '.components[] | select(.type == "operating-system")
+  | [.properties[] | select(.name == "syft:distro:id" or .name == "syft:distro:versionID") | .value]
+  | join(" ")' sbom.cdx.json
+# debian 13.7  ->  --os-distro "debian:13"
 ```
 
 ## 4. Vulnerabilities: hoppr-cop plus the gate
@@ -109,7 +112,8 @@ python3 scripts/hopprcop_gate.py reports/app-enhanced.json --fail-on high
 - The gate fails on any finding at or above `--fail-on` (default `high`) unless
   it has an accepted assessment. It uses the highest severity any source gives,
   which is stricter than hoppr-cop's own table.
-- Assessments older than `--assessment-max-age` days (default 180) fail again.
+- Assessments older than `--assessment-max-age` days (default 180), or with no
+  date, fail again.
 
 **Fix findings by updating the base image or the package**, then rebuild. To
 accept a risk, add an entry to `analysis.assessment.yml` with `state`
@@ -128,8 +132,10 @@ major version: `ssg-rhel9-ds.xml` for UBI 9, `ssg-debian13-ds.xml` for Debian 13
 ```bash
 oscap info --profiles ssg-rhel9-ds.xml            # list profiles
 
+# oscap-podman runs as root, so load the image into root's podman storage.
+sudo podman load -i image.tar
 sudo oscap-podman "$IMAGE:$GIT_SHA" xccdf eval \
-  --profile xccdf_org.ssgproject.content_profile_stig \
+  --profile xccdf_org.ssgproject.content_profile_stig_container \
   --tailoring-file container-tailoring.xml \
   --results results.xml --results-arf arf.xml --report oscap-report.html \
   ssg-rhel9-ds.xml
