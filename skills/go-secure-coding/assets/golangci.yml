@@ -1,0 +1,41 @@
+# .golangci.yml (golangci-lint v2)
+version: "2"
+
+linters:
+  default: standard        # errcheck, govet, ineffassign, staticcheck, unused
+  enable:
+    - gosec
+    - bodyclose
+    - contextcheck
+    - errorlint
+    - noctx
+    - nilerr
+    - rowserrcheck
+    - sqlclosecheck
+    - copyloopvar
+    - forcetypeassert
+    - misspell
+    - revive
+  settings:
+    errcheck:
+      # Closing something you only read from can't lose data. Close errors on
+      # files you write to still matter: check them explicitly.
+      exclude-functions:
+        - (*os.File).Close
+        - (*os.Root).Close
+        - (io.ReadCloser).Close
+    gosec:
+      excludes: []         # suppress per line with //nolint:gosec // GXXX: reason
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters: [gosec]
+        text: "G404"       # math/rand is fine in tests
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+run:
+  timeout: 5m
