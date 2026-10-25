@@ -77,7 +77,8 @@ resp, err := http.Get(url)
 
 // Good
 client := &http.Client{Timeout: 10 * time.Second}
-req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+if err != nil { return err }   // a malformed URL gives a nil req; Do(nil) panics
 resp, err := client.Do(req)
 if err != nil { return err }
 defer resp.Body.Close()
