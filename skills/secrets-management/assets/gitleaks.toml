@@ -4,10 +4,9 @@ useDefault = true
 
 [allowlist]
 description = "Fake values used in tests and docs"
+# Allow exact fake values only. Never allow-list paths such as .env.example:
+# gitleaks would then skip a real key someone pastes there by mistake.
 regexes = [
   '''AKIAIOSFODNN7EXAMPLE''',
   '''sk_test_0{20,}''',
-]
-paths = [
-  '''\.env\.example$''',
 ]
