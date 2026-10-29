@@ -88,8 +88,10 @@ Commit upgrades separately (`build: upgrade dependencies`).
 
 ## 3. Lint, format, types
 
-Use `assets/eslint.config.mjs` and `assets/tsconfig.strict.json` as the
-baseline.
+Use `assets/eslint.config.example.mjs` (copy it to the project root as
+`eslint.config.mjs`) and `assets/tsconfig.strict.json` as the baseline. The
+example keeps its `.example` name so ESLint doesn't load it as a live config
+from inside the skill folder.
 
 ```bash
 npx eslint . --max-warnings 0
