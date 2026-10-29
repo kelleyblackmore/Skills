@@ -22,7 +22,9 @@ readability, readability wins. For *how much* to change and when to stop, see
 3. **One function, one job, one level of abstraction.** If you need "and" to
    describe it, split it.
 4. **Handle errors explicitly.** Never swallow an exception or ignore a return
-   code. Fail with a message that says what went wrong and with which input.
+   code. Fail with a message that says what went wrong and with which input,
+   identified by a field name or safe ID. Never put passwords, tokens, keys or
+   connection strings in errors or logs.
 5. **Comments explain why, not what.** If a comment explains what, rename or
    restructure until it doesn't need to.
 6. **No dead code.** No commented-out blocks, unused parameters, imports,
@@ -73,11 +75,14 @@ def ship(order):
     if order is None:
         raise ValueError("no order")
     if not order.paid:
-        raise ValueError(f"order {order.id} is unpaid")
+        raise ValueError("unpaid")
     if not order.items:
-        raise ValueError(f"order {order.id} has no items")
+        raise ValueError("no items")
     return dispatch(order)
 ```
+
+Same behaviour, same errors: a refactor changes structure only. Improve the
+messages in a separate change.
 
 ## 3. Structure
 
