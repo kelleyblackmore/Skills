@@ -150,15 +150,19 @@ the boundary is exact.
 
 ## 6. Prove the test can fail
 
-Before you call a test done, check it would catch a regression:
+Before you call a test done, check it would catch a regression. For new
+behaviour, break the code under test (flip a condition, return early), run the
+test, expect red, and undo the change.
+
+For a bug fix, commit the fix and its test first, then run the new test against
+the base branch's code (assuming tests live outside `src/`):
 
 ```bash
-# Break the code under test (flip a condition, return early), run the test, expect red.
-# For a bug fix, run the new test against the code without the fix:
-git stash push -- src/            # hide the fix, keep the test
-pytest tests/test_token.py        # must fail
-git stash pop                     # restore the fix
-pytest tests/test_token.py        # must pass
+git checkout origin/develop -- src/   # old code, new test
+pytest tests/test_token.py            # must fail, for the bug's reason
+git checkout HEAD -- src/             # back to the committed fix
+pytest tests/test_token.py            # must pass
+git status                            # clean again
 ```
 
 For critical logic, mutation testing automates this: `mutmut` (Python),
@@ -208,7 +212,7 @@ has one. Otherwise:
 |---|---|---|---|---|
 | **Python (pytest)** | `pytest` | `pytest tests/test_x.py::test_name` | `pytest -p randomly` (pytest-randomly), `pytest --count=50` (pytest-repeat) | `pytest --cov --cov-branch --cov-report=term-missing` |
 | **Go** | `go test -race ./...` | `go test -run 'TestParse/empty' ./pkg/x` | `go test -shuffle=on -count=50 ./pkg/x` | `go test -coverprofile=cover.out ./... && go tool cover -func=cover.out` |
-| **Rust** | `cargo test` | `cargo test parse_empty -- --exact` | `cargo test -- --test-threads=1` to rule out parallelism | `cargo llvm-cov` (cargo-llvm-cov) |
+| **Rust** | `cargo test` | `cargo test tests::parse_empty -- --exact` (full path) | `cargo test -- --test-threads=1` to rule out parallelism | `cargo llvm-cov` (cargo-llvm-cov) |
 | **Vitest** | `vitest run` | `vitest run src/x.test.ts -t "name"` | `vitest run --sequence.shuffle` | `vitest run --coverage` (@vitest/coverage-v8) |
 | **Jest** | `jest` | `jest src/x.test.ts -t "name"` | `jest --randomize` | `jest --coverage` |
 
