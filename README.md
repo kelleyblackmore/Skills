@@ -20,6 +20,8 @@ specific job the way we want it done. Each skill is a folder with a `SKILL.md`
 | [kubernetes-security](skills/kubernetes-security/SKILL.md) | Restricted pod security, pinned images, limits, least-privilege RBAC, default-deny network, kubeconform, kube-linter |
 | [secrets-management](skills/secrets-management/SKILL.md) | No secrets in git, gitleaks in pre-commit and CI, runtime loading, OIDC, leaked-secret response |
 | [code-review](skills/code-review/SKILL.md) | Reviewing PRs/MRs: what to check, verifying findings, severity labels, writing actionable comments |
+| [clean-code](skills/clean-code/SKILL.md) | Readable code: naming, small single-purpose functions, guard clauses, explicit errors, why-comments, no dead code, safe refactoring |
+| [pragmatic-coding](skills/pragmatic-coding/SKILL.md) | Smallest change that solves the real problem: YAGNI, one source of truth, tracer bullets, fail fast, debug by evidence, finish the job |
 
 Browse them at **https://kelleyblackmore.github.io/Skills/**.
 
