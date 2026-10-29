@@ -135,6 +135,8 @@ Bad comments:
 
 ## 7. Tests
 
+What to test and how is in `testing`. For readability:
+
 - Tests are code too: same naming and clarity standards.
 - One behaviour per test, named for it:
   `test_expired_token_is_rejected`, not `test_token_2`.

@@ -49,6 +49,7 @@ of consequence is in it. Optimise for that, not for volume.
    API/schema changes backward compatible? Config and feature-flag defaults?
 4. **Tests.** Is the new behaviour tested, including the failure path? Would the
    test fail if the fix were reverted? Are any tests skipped, weakened or deleted?
+   (See `testing`, Reviewing tests.)
 5. **Design and maintainability.** Duplicates existing code? Right layer? Names
    say what things are? Comments explain *why*?
 6. **Style.** Only what the linters don't catch, and only if the repo cares.

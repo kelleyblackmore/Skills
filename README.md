@@ -22,6 +22,7 @@ specific job the way we want it done. Each skill is a folder with a `SKILL.md`
 | [code-review](skills/code-review/SKILL.md) | Reviewing PRs/MRs: what to check, verifying findings, severity labels, writing actionable comments |
 | [clean-code](skills/clean-code/SKILL.md) | Readable code: naming, small single-purpose functions, guard clauses, explicit errors, why-comments, no dead code, safe refactoring |
 | [pragmatic-coding](skills/pragmatic-coding/SKILL.md) | Smallest change that solves the real problem: YAGNI, one source of truth, tracer bullets, fail fast, debug by evidence, finish the job |
+| [testing](skills/testing/SKILL.md) | Behaviour-focused tests: what and at which level to test, fakes at the edges, failing-test-first fixes, proving tests can fail, flaky-test causes, coverage, per-language commands |
 
 Browse them at **https://kelleyblackmore.github.io/Skills/**.
 
