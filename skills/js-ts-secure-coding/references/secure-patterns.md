@@ -118,7 +118,9 @@ a === b                               // timing leak on secrets
 const API_KEY = process.env.API_KEY;  // validated at startup
 randomBytes(32).toString("base64url");
 await argon2.hash(password);          // or bcrypt / scrypt
-timingSafeEqual(Buffer.from(a), Buffer.from(b));
+// timingSafeEqual throws on different lengths, so compare fixed-size digests.
+const digest = (s: string) => createHash("sha256").update(s).digest();
+timingSafeEqual(digest(a), digest(b));
 ```
 
 Never ship secrets to the browser: anything in a client bundle
