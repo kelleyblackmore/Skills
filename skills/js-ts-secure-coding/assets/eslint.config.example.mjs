@@ -1,6 +1,8 @@
 // ESLint flat config. Install the latest of each:
-//   npm i -D eslint @eslint/js typescript typescript-eslint eslint-plugin-security
+//   npm i -D eslint @eslint/js globals typescript typescript-eslint eslint-plugin-security
+//   (and @types/node for Node code)
 import js from "@eslint/js";
+import globals from "globals";
 import security from "eslint-plugin-security";
 import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
@@ -13,6 +15,9 @@ export default defineConfig(
   security.configs.recommended,
   {
     languageOptions: {
+      // Node globals (process, console, Buffer). For code that runs in a
+      // browser, add a block with `files` for those paths and globals.browser.
+      globals: { ...globals.node },
       parserOptions: {
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
